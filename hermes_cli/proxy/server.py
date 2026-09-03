@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
+import ssl
 from typing import Optional
 
 try:
@@ -248,10 +249,13 @@ async def run_server(
     host: str = DEFAULT_HOST,
     port: int = DEFAULT_PORT,
     shutdown_event: Optional[asyncio.Event] = None,
+    ssl_context: Optional[ssl.SSLContext] = None,
 ) -> None:
     """Run the proxy in the current event loop until shutdown_event is set.
 
     If shutdown_event is None, runs until cancelled (Ctrl+C or SIGTERM).
+    Pass ssl_context to enable HTTPS — required for iOS App Transport Security
+    when the proxy is exposed over Tailscale or any non-loopback interface.
     """
     if not AIOHTTP_AVAILABLE:
         raise RuntimeError(
@@ -261,12 +265,13 @@ async def run_server(
     app = create_app(adapter)
     runner = web.AppRunner(app, access_log=None)
     await runner.setup()
-    site = web.TCPSite(runner, host=host, port=port)
+    site = web.TCPSite(runner, host=host, port=port, ssl_context=ssl_context)
     await site.start()
 
+    scheme = "https" if ssl_context else "http"
     logger.info(
-        "proxy: listening on http://%s:%d/v1 -> %s",
-        host, port, adapter.display_name,
+        "proxy: listening on %s://%s:%d/v1 -> %s",
+        scheme, host, port, adapter.display_name,
     )
 
     stop_event = shutdown_event or asyncio.Event()
@@ -295,4 +300,16 @@ __all__ = [
     "DEFAULT_HOST",
     "DEFAULT_PORT",
     "AIOHTTP_AVAILABLE",
+    "build_ssl_context",
 ]
+
+
+def build_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
+    """Return a server SSLContext loaded from PEM cert and key files.
+
+    Use cert/key from `tailscale cert <hostname>` to get a valid TLS
+    certificate that iOS will trust without ATS exceptions.
+    """
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain(cert_path, key_path)
+    return ctx
