@@ -92,7 +92,11 @@ def _write_file(path: str, content: str, append: bool = False) -> dict:
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
         mode = "a" if append else "w"
-        p.write_text(content) if not append else p.open(mode).write(content)
+        if not append:
+            p.write_text(content, encoding="utf-8")
+        else:
+            with p.open(mode, encoding="utf-8") as f:
+                f.write(content)
         return {"success": True, "path": str(p), "bytes": len(content.encode())}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
@@ -152,7 +156,7 @@ def _process_list(name_filter: str | None = None) -> dict:
 def _kill_process(pid: int, signal: str = "TERM") -> dict:
     sig_map = {"TERM": 15, "KILL": 9, "HUP": 1, "INT": 2}
     sig_num = sig_map.get(signal.upper(), 15)
-    result = subprocess.run(["kill", f"-{sig_num}", str(pid)], capture_output=True, text=True)
+    result = subprocess.run(["kill", f"-{sig_num}", str(pid)], capture_output=True, text=True, encoding="utf-8", errors="replace")
     return {"success": result.returncode == 0, "stderr": result.stderr}
 
 
