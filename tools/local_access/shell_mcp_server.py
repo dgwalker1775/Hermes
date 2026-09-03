@@ -170,6 +170,117 @@ def _tailscale_status() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Apple Notes (AppleScript) — requires Automation permission in System Settings
+# ---------------------------------------------------------------------------
+
+_NOTES_PERMISSION_HINT = (
+    "If you see an error about permissions or Notes not responding, go to "
+    "System Settings → Privacy & Security → Automation and enable Notes for "
+    "the Hermes process."
+)
+
+
+def _osascript(script: str, timeout: int = 15) -> dict:
+    result = subprocess.run(
+        ["osascript", "-e", script],
+        capture_output=True, text=True,
+        stdin=subprocess.DEVNULL,
+        encoding="utf-8", errors="replace",
+        timeout=timeout,
+    )
+    return {
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip(),
+        "success": result.returncode == 0,
+    }
+
+
+def _notes_list(folder: str | None = None) -> dict:
+    if folder:
+        script = (
+            f'tell application "Notes" to get {{name, id}} of notes '
+            f'of folder "{folder}"'
+        )
+    else:
+        script = 'tell application "Notes" to get {name, id} of every note'
+    r = _osascript(script)
+    if not r["success"]:
+        return {"error": r["stderr"] or "AppleScript failed", "hint": _NOTES_PERMISSION_HINT}
+    # AppleScript returns comma-separated lists; parse best-effort
+    raw = r["stdout"]
+    return {"raw": raw, "hint": "Use notes_read with the note name to get content."}
+
+
+def _notes_read(name: str, folder: str | None = None) -> dict:
+    if folder:
+        script = (
+            f'tell application "Notes"\n'
+            f'  set n to first note of folder "{folder}" whose name is "{name}"\n'
+            f'  return {{name of n, body of n}}\n'
+            f'end tell'
+        )
+    else:
+        script = (
+            f'tell application "Notes"\n'
+            f'  set n to first note whose name is "{name}"\n'
+            f'  return {{name of n, body of n}}\n'
+            f'end tell'
+        )
+    r = _osascript(script, timeout=20)
+    if not r["success"]:
+        return {"error": r["stderr"] or "Note not found or permission denied", "hint": _NOTES_PERMISSION_HINT}
+    return {"content": r["stdout"]}
+
+
+def _notes_create(title: str, body: str, folder: str | None = None) -> dict:
+    safe_title = title.replace('"', '\\"')
+    safe_body = body.replace('"', '\\"').replace("\n", "\\n")
+    if folder:
+        script = (
+            f'tell application "Notes"\n'
+            f'  tell folder "{folder}"\n'
+            f'    make new note with properties {{name:"{safe_title}", body:"{safe_body}"}}\n'
+            f'  end tell\n'
+            f'end tell'
+        )
+    else:
+        script = (
+            f'tell application "Notes"\n'
+            f'  make new note with properties {{name:"{safe_title}", body:"{safe_body}"}}\n'
+            f'end tell'
+        )
+    r = _osascript(script, timeout=20)
+    if not r["success"]:
+        return {"error": r["stderr"] or "Failed to create note", "hint": _NOTES_PERMISSION_HINT}
+    return {"success": True, "result": r["stdout"]}
+
+
+# ---------------------------------------------------------------------------
+# iCloud Drive
+# ---------------------------------------------------------------------------
+
+_ICLOUD_ROOT = "~/Library/Mobile Documents/com~apple~CloudDocs"
+
+
+def _icloud_list(subpath: str = "", show_hidden: bool = False) -> dict:
+    base = os.path.expanduser(_ICLOUD_ROOT)
+    target = os.path.join(base, subpath.lstrip("/")) if subpath else base
+    return _list_dir(target, show_hidden=show_hidden)
+
+
+def _icloud_read(subpath: str) -> dict:
+    base = os.path.expanduser(_ICLOUD_ROOT)
+    target = os.path.join(base, subpath.lstrip("/"))
+    return _read_file(target)
+
+
+def _icloud_write(subpath: str, content: str, append: bool = False) -> dict:
+    base = os.path.expanduser(_ICLOUD_ROOT)
+    target = os.path.join(base, subpath.lstrip("/"))
+    return _write_file(target, content, append=append)
+
+
+# ---------------------------------------------------------------------------
 # Tool registry
 # ---------------------------------------------------------------------------
 
@@ -268,6 +379,85 @@ TOOLS = [
         "description": "Get current Tailscale network status including peers, IPs, and connectivity.",
         "inputSchema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "notes_list",
+        "description": (
+            "List Apple Notes on the Mac. Returns note names and IDs. "
+            "Requires Automation → Notes permission in System Settings."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "folder": {"type": "string", "description": "Notes folder name to scope the list (optional)"},
+            },
+        },
+    },
+    {
+        "name": "notes_read",
+        "description": (
+            "Read the full content of an Apple Note by name. "
+            "Requires Automation → Notes permission in System Settings."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Exact note title"},
+                "folder": {"type": "string", "description": "Notes folder to search in (optional)"},
+            },
+            "required": ["name"],
+        },
+    },
+    {
+        "name": "notes_create",
+        "description": (
+            "Create a new Apple Note with a title and body. "
+            "Requires Automation → Notes permission in System Settings."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Note title"},
+                "body": {"type": "string", "description": "Note body text"},
+                "folder": {"type": "string", "description": "Notes folder to create in (optional, defaults to iCloud)"},
+            },
+            "required": ["title", "body"],
+        },
+    },
+    {
+        "name": "icloud_list",
+        "description": "List files and folders in iCloud Drive. Defaults to root of iCloud Drive.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "subpath": {"type": "string", "description": "Relative path inside iCloud Drive (optional)"},
+                "show_hidden": {"type": "boolean", "description": "Include dotfiles (default: false)"},
+            },
+        },
+    },
+    {
+        "name": "icloud_read",
+        "description": "Read a file from iCloud Drive by relative path.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "subpath": {"type": "string", "description": "Relative path inside iCloud Drive (e.g. 'Documents/notes.txt')"},
+            },
+            "required": ["subpath"],
+        },
+    },
+    {
+        "name": "icloud_write",
+        "description": "Write or append to a file in iCloud Drive. Creates parent dirs automatically.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "subpath": {"type": "string", "description": "Relative path inside iCloud Drive"},
+                "content": {"type": "string", "description": "Content to write"},
+                "append": {"type": "boolean", "description": "Append instead of overwrite (default: false)"},
+            },
+            "required": ["subpath", "content"],
+        },
+    },
 ]
 
 
@@ -292,6 +482,18 @@ def _call_tool(name: str, args: dict) -> Any:
         return _kill_process(args["pid"], args.get("signal", "TERM"))
     elif name == "tailscale_status":
         return _tailscale_status()
+    elif name == "notes_list":
+        return _notes_list(args.get("folder"))
+    elif name == "notes_read":
+        return _notes_read(args["name"], args.get("folder"))
+    elif name == "notes_create":
+        return _notes_create(args["title"], args["body"], args.get("folder"))
+    elif name == "icloud_list":
+        return _icloud_list(args.get("subpath", ""), args.get("show_hidden", False))
+    elif name == "icloud_read":
+        return _icloud_read(args["subpath"])
+    elif name == "icloud_write":
+        return _icloud_write(args["subpath"], args["content"], args.get("append", False))
     else:
         return {"error": f"Unknown tool: {name}"}
 
