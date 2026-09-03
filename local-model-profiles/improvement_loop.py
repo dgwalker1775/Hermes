@@ -337,7 +337,7 @@ def log(msg: str) -> None:
     line = f"[{ts}] {msg}"
     print(line)
     WORK_DIR.mkdir(parents=True, exist_ok=True)
-    with open(LOG_PATH, "a") as f:
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
 

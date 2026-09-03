@@ -177,7 +177,7 @@ class HermesRouter:
                 used = total - pages.get("Pages free", 0) - pages.get("Pages speculative", 0)
                 return used / total if total else 0.0
             else:
-                with open("/proc/meminfo") as f:
+                with open("/proc/meminfo", encoding="utf-8") as f:
                     info = {}
                     for line in f:
                         k, v = line.split(":")
@@ -273,7 +273,7 @@ class HermesRouter:
             "error": decision.error,
         }
         try:
-            with open(self.audit_log_path, "a") as f:
+            with open(self.audit_log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(record) + "\n")
         except OSError:
             pass
