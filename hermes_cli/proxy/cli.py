@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import ssl
 import sys
 from typing import Any
 
@@ -12,6 +13,7 @@ from hermes_cli.proxy.server import (
     AIOHTTP_AVAILABLE,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    build_ssl_context,
     run_server,
 )
 
@@ -50,12 +52,47 @@ def cmd_proxy_start(args: Any) -> int:
         )
         return 2
 
-    host = getattr(args, "host", None) or DEFAULT_HOST
+    # --tailscale expands to 0.0.0.0 so the proxy is reachable on the
+    # Tailscale interface (100.x.x.x) from iOS / other Tailscale nodes.
+    use_tailscale = getattr(args, "tailscale", False)
+    host = getattr(args, "host", None) or ("0.0.0.0" if use_tailscale else DEFAULT_HOST)
     port = getattr(args, "port", None) or DEFAULT_PORT
+
+    # Build an SSL context when the caller supplies TLS cert + key.
+    # On Tailscale: generate cert/key via `tailscale cert <hostname>`.
+    # iOS App Transport Security (ATS) requires HTTPS for all non-localhost
+    # connections — plain HTTP will be silently blocked on the device.
+    tls_cert = getattr(args, "tls_cert", None)
+    tls_key = getattr(args, "tls_key", None)
+    ssl_context: ssl.SSLContext | None = None
+
+    if tls_cert or tls_key:
+        if not (tls_cert and tls_key):
+            print(
+                "Error: --tls-cert and --tls-key must both be provided together.",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            ssl_context = build_ssl_context(tls_cert, tls_key)
+        except (ssl.SSLError, OSError) as exc:
+            print(f"Error loading TLS certificate/key: {exc}", file=sys.stderr)
+            return 2
+
+    scheme = "https" if ssl_context else "http"
+
+    if use_tailscale and not ssl_context:
+        print(
+            "Warning: --tailscale without --tls-cert/--tls-key uses plain HTTP.\n"
+            "  iOS will reject connections — ATS blocks non-HTTPS on non-loopback addresses.\n"
+            "  Run `tailscale cert <your-tailscale-hostname>` and pass the resulting\n"
+            "  .crt and .key files via --tls-cert / --tls-key.",
+            file=sys.stderr,
+        )
 
     print(
         f"Starting Hermes proxy for {adapter.display_name}\n"
-        f"  Listening on:  http://{host}:{port}/v1\n"
+        f"  Listening on:  {scheme}://{host}:{port}/v1\n"
         f"  Forwarding to: (resolved per-request from your subscription)\n"
         f"  Use any bearer token in the client — the proxy attaches your real credential.\n"
         f"\n"
@@ -64,7 +101,7 @@ def cmd_proxy_start(args: Any) -> int:
     )
 
     try:
-        asyncio.run(run_server(adapter, host=host, port=port))
+        asyncio.run(run_server(adapter, host=host, port=port, ssl_context=ssl_context))
     except KeyboardInterrupt:
         print("\nproxy: stopped", file=sys.stderr)
     except OSError as exc:

@@ -344,6 +344,34 @@ def build_gateway_parser(
         default=None,
         help="Bind port (default: 8645)",
     )
+    proxy_start.add_argument(
+        "--tls-cert",
+        default=None,
+        metavar="PATH",
+        dest="tls_cert",
+        help=(
+            "Path to TLS certificate file (PEM). Required for HTTPS. "
+            "On Tailscale: run `tailscale cert <hostname>` to obtain a trusted cert."
+        ),
+    )
+    proxy_start.add_argument(
+        "--tls-key",
+        default=None,
+        metavar="PATH",
+        dest="tls_key",
+        help="Path to TLS private key file (PEM). Required alongside --tls-cert.",
+    )
+    proxy_start.add_argument(
+        "--tailscale",
+        action="store_true",
+        default=False,
+        help=(
+            "Shorthand for Tailscale setups: binds to 0.0.0.0 instead of "
+            "127.0.0.1 so the proxy is reachable on your Tailscale IP. "
+            "Combine with --tls-cert/--tls-key (from `tailscale cert`) for "
+            "secure HTTPS that iOS trusts without ATS exceptions."
+        ),
+    )
 
     proxy_subparsers.add_parser(
         "status", help="Show which proxy upstreams are ready"
