@@ -95,6 +95,48 @@ PYEOF
     fi
 fi
 
+# 5. Install Ollama keepalive script + launchd plist
+KEEPALIVE_SCRIPT="$SCRIPT_DIR/ollama_keepalive.sh"
+KEEPALIVE_INSTALL="$HOME/.hermes/tools/ollama_keepalive.sh"
+KEEPALIVE_PLIST="$HOME/Library/LaunchAgents/com.hermes.ollama-keepalive.plist"
+
+cp "$KEEPALIVE_SCRIPT" "$KEEPALIVE_INSTALL"
+chmod +x "$KEEPALIVE_INSTALL"
+echo "✓ Ollama keepalive script installed: $KEEPALIVE_INSTALL"
+
+# Write plist with actual username substituted
+sed "s|/Users/dillonwalker|$HOME|g" \
+    "$SCRIPT_DIR/com.hermes.ollama-keepalive.plist" > "$KEEPALIVE_PLIST"
+
+launchctl unload "$KEEPALIVE_PLIST" 2>/dev/null || true
+launchctl load "$KEEPALIVE_PLIST"
+echo "✓ Ollama keepalive launchd service loaded (pings model every 4 min)"
+
+# Warm the model immediately
+bash "$KEEPALIVE_INSTALL" 2>/dev/null && echo "✓ local12b-hermes:latest pinned in VRAM" || echo "⚠ Ollama not running — model will warm on next Ollama start"
+
+# 6. Install adaptive reasoning soul fragment
+SOUL_SRC="$SCRIPT_DIR/soul_reasoning_protocol.md"
+SOUL_DIR="$HOME/.hermes/souls"
+SOUL_DEST="$SOUL_DIR/reasoning_protocol.md"
+
+mkdir -p "$SOUL_DIR"
+cp "$SOUL_SRC" "$SOUL_DEST"
+echo "✓ Adaptive reasoning soul installed: $SOUL_DEST"
+
+# Tell Hermes to load it — append to soul.md if not already there
+SOUL_MAIN="$HOME/.hermes/soul.md"
+if [[ ! -f "$SOUL_MAIN" ]]; then
+    echo "# Hermes Soul" > "$SOUL_MAIN"
+fi
+if ! grep -q "soul_reasoning_protocol\|Reasoning Depth Protocol" "$SOUL_MAIN" 2>/dev/null; then
+    printf '\n\n' >> "$SOUL_MAIN"
+    cat "$SOUL_DEST" >> "$SOUL_MAIN"
+    echo "✓ Reasoning protocol appended to $SOUL_MAIN"
+else
+    echo "✓ Reasoning protocol already in soul.md (skipping)"
+fi
+
 echo ""
 echo "=== Install complete ==="
 echo ""
@@ -108,5 +150,8 @@ echo "  list_processes  — ps aux with filter"
 echo "  kill_process    — send signal to PID"
 echo "  tailscale_status— Tailscale network state"
 echo ""
-echo "Restart 'hermes dashboard' to pick up the new MCP server:"
+echo "Ollama model stays warm in VRAM (pinged every 4 min)."
+echo "Adaptive reasoning active — Hermes auto-selects depth per task."
+echo ""
+echo "Restart 'hermes dashboard' to pick up the new MCP server and soul:"
 echo "  launchctl kickstart -k gui/\$(id -u)/ai.hermes.dashboard"
