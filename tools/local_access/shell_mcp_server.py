@@ -48,19 +48,16 @@ def _error(req_id, code: int, message: str):
 # Tool implementations
 # ---------------------------------------------------------------------------
 
-def _run_shell(command: str, cwd: str | None = None, timeout: int = 60, env_extra: dict | None = None) -> dict:
-    env = os.environ.copy()
-    if env_extra:
-        env.update(env_extra)
+def _run_shell(command: str, cwd: str | None = None, timeout: int = 60) -> dict:
     try:
         result = subprocess.run(
             command,
             shell=True,
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
             cwd=cwd or os.path.expanduser("~"),
             timeout=timeout,
-            env=env,
         )
         return {
             "stdout": result.stdout,
@@ -139,7 +136,9 @@ def _get_env(keys: list[str] | None = None) -> dict:
 def _process_list(name_filter: str | None = None) -> dict:
     result = subprocess.run(
         ["ps", "aux"],
-        capture_output=True, text=True
+        capture_output=True, text=True,
+        stdin=subprocess.DEVNULL,
+        encoding="utf-8", errors="replace",
     )
     lines = result.stdout.strip().split("\n")
     header = lines[0] if lines else ""
@@ -156,7 +155,7 @@ def _process_list(name_filter: str | None = None) -> dict:
 def _kill_process(pid: int, signal: str = "TERM") -> dict:
     sig_map = {"TERM": 15, "KILL": 9, "HUP": 1, "INT": 2}
     sig_num = sig_map.get(signal.upper(), 15)
-    result = subprocess.run(["kill", f"-{sig_num}", str(pid)], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    result = subprocess.run(["kill", f"-{sig_num}", str(pid)], capture_output=True, text=True, stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
     return {"success": result.returncode == 0, "stderr": result.stderr}
 
 
