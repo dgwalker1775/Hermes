@@ -4691,7 +4691,7 @@ async function copyImageFromUrl(rawUrl) {
     throw new Error('Could not read image')
   }
 
-  clipboard.writeImage(image)
+  (clipboard as any).writeImage(image)
 }
 
 async function saveImageFromUrl(rawUrl) {
@@ -11067,7 +11067,7 @@ ipcMain.handle('hermes:saveImageBuffer', async (_event, payload) => {
 })
 
 ipcMain.handle('hermes:saveClipboardImage', async () => {
-  const image = clipboard.readImage()
+  const image = (clipboard as any).readImage()
 
   if (image && !image.isEmpty()) {
     return writeComposerImage(image.toPNG(), '.png')
