@@ -176,8 +176,8 @@ class TestMcpToolCallProjection:
         item = {
             "type": "mcpToolCall",
             "id": "m1",
-            "server": "obsidian",
-            "tool": "search_notes",
+            "server": "discord",
+            "tool": "search_messages",
             "status": "completed",
             "arguments": {"query": "hermes"},
             "result": {"content": [{"text": "found"}]},
@@ -186,7 +186,7 @@ class TestMcpToolCallProjection:
         msgs = CodexEventProjector().project(
             {"method": "item/completed", "params": {"item": item}}
         ).messages
-        assert msgs[0]["tool_calls"][0]["function"]["name"] == "mcp.obsidian.search_notes"
+        assert msgs[0]["tool_calls"][0]["function"]["name"] == "mcp.discord.search_messages"
         assert "found" in msgs[1]["content"]
 
     def test_mcp_error_surfaced(self) -> None:

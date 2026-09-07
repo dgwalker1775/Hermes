@@ -21,7 +21,6 @@ Karpathy 的 LLM Wiki：构建/查询互联 Markdown 知识库。
 | 许可证 | MIT |
 | 平台 | linux, macos, windows |
 | 标签 | `wiki`, `knowledge-base`, `research`, `notes`, `markdown`, `rag-alternative` |
-| 相关 skill | [`obsidian`](/user-guide/skills/bundled/note-taking/note-taking-obsidian), [`arxiv`](/user-guide/skills/bundled/research/research-arxiv) |
 
 ## 参考：完整 SKILL.md
 
@@ -399,12 +398,10 @@ Wiki 目录开箱即用作为 Obsidian vault：
 
 ### Obsidian 无头模式（服务器和无显示器机器）
 
-在没有显示器的机器上，使用 `obsidian-headless` 代替桌面应用。它通过 Obsidian Sync 同步 vault，无需 GUI——非常适合在服务器上运行、向 wiki 写入内容，同时在另一台设备上用 Obsidian 桌面端读取的 Agent。
 
 **设置：**
 ```bash
 # Requires Node.js 22+
-npm install -g obsidian-headless
 
 # Login (requires Obsidian account with Sync subscription)
 ob login --email <email> --password '<password>'
@@ -425,7 +422,6 @@ ob sync --continuous
 
 **通过 systemd 实现持续后台同步：**
 ```ini
-# ~/.config/systemd/user/obsidian-wiki-sync.service
 [Unit]
 Description=Obsidian LLM Wiki Sync
 After=network-online.target
@@ -443,7 +439,6 @@ WantedBy=default.target
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user enable --now obsidian-wiki-sync
 # Enable linger so sync survives logout:
 sudo loginctl enable-linger $USER
 ```

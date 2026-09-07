@@ -183,10 +183,10 @@ The script does the mechanical collection; the agent adds the reasoning layer.
 Chain skills together for complex scheduled tasks. Skills are loaded in order before the prompt executes.
 
 ```bash
-# Use the arxiv skill to find papers, then the obsidian skill to save notes
-/cron add "0 8 * * *" "Search arXiv for the 3 most interesting papers on 'language model reasoning' from the past day. For each paper, create an Obsidian note with the title, authors, abstract summary, and key contribution." \
+# Use the arxiv skill to find papers, then the notion skill to save notes
+/cron add "0 8 * * *" "Search arXiv for the 3 most interesting papers on 'language model reasoning' from the past day. For each paper, create a Notion database entry with the title, authors, abstract summary, and key contribution." \
   --skill arxiv \
-  --skill obsidian \
+  --skill notion \
   --name "Paper digest"
 ```
 
@@ -195,15 +195,15 @@ From the tool directly:
 ```python
 cronjob(
     action="create",
-    skills=["arxiv", "obsidian"],
-    prompt="Search arXiv for papers on 'language model reasoning' from the past day. Save the top 3 as Obsidian notes.",
+    skills=["arxiv", "notion"],
+    prompt="Search arXiv for papers on 'language model reasoning' from the past day. Save the top 3 as Notion database entries.",
     schedule="0 8 * * *",
     name="Paper digest",
     deliver="local"
 )
 ```
 
-Skills are loaded in order — `arxiv` first (teaches the agent how to search papers), then `obsidian` (teaches how to write notes). The prompt ties them together.
+Skills are loaded in order — `arxiv` first (teaches the agent how to search papers), then `notion` (teaches how to write database entries). The prompt ties them together.
 
 ---
 
@@ -224,7 +224,7 @@ Skills are loaded in order — `arxiv` first (teaches the agent how to search pa
 /cron edit <job_id> --prompt "Updated task description"
 
 # Add or remove skills from an existing job
-/cron edit <job_id> --skill arxiv --skill obsidian
+/cron edit <job_id> --skill arxiv --skill notion
 /cron edit <job_id> --clear-skills
 
 # Remove a job permanently
