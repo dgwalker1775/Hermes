@@ -372,6 +372,25 @@ TASK_COMPLETION_GUIDANCE = (
     "is always better than inventing a result."
 )
 
+# Compressed tool-use guidance for local/quantized models (qwen, hermes, etc.)
+# These models have smaller context windows and limited reasoning capacity.
+# Cut down the verbosity by 70%: aggressive, direct, no elaboration.
+# Designed to trigger tool calls in <3s instead of reasoning for 70+ seconds.
+LOCAL_MODEL_TOOL_USE_GUIDANCE = (
+    "# Tool use (local model)\n"
+    "YOU MUST call tools immediately when needed. Do not describe, plan, or explain—"
+    "EXECUTE. If the user asks you to do something and you have a tool that does it, "
+    "call the tool NOW. No delays, no alternatives, no suggestions. Tools are how you "
+    "work. Use them first, explain results after.\n"
+)
+
+# Compressed parallel-tool guidance for local models
+LOCAL_MODEL_PARALLEL_TOOL_GUIDANCE = (
+    "# Parallel tool calls (local model)\n"
+    "When you need several independent results, make all the calls together in one "
+    "response. Don't call tools one at a time. Batch saves latency and tokens.\n"
+)
+
 # Universal parallel-tool-call guidance — applied to ALL models.
 #
 # Why this matters for cost: every assistant turn resends the entire

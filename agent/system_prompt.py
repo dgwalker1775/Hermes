@@ -36,6 +36,8 @@ from agent.prompt_builder import (
     GOOGLE_MODEL_OPERATIONAL_GUIDANCE,
     HERMES_AGENT_HELP_GUIDANCE,
     KANBAN_GUIDANCE,
+    LOCAL_MODEL_PARALLEL_TOOL_GUIDANCE,
+    LOCAL_MODEL_TOOL_USE_GUIDANCE,
     MEMORY_GUIDANCE,
     OPENAI_MODEL_EXECUTION_GUIDANCE,
     PARALLEL_TOOL_CALL_GUIDANCE,
@@ -74,6 +76,33 @@ def _ra():
     """
     import run_agent
     return run_agent
+
+
+def _is_local_quantized_model(model: str) -> bool:
+    """Detect if a model is local/quantized (Ollama, LM Studio, etc.).
+
+    Local models have limited reasoning capacity and need compressed prompts
+    to avoid long reasoning loops that yield 0 tool calls.
+
+    Patterns: qwen, hermes, llama, mistral, phi, tinyllama, neural-chat,
+    dolphin, orca, platypus, openchat, or models with ':' (Ollama format).
+    """
+    if not model:
+        return False
+    model_lower = str(model).lower()
+    # Ollama format: model:tag
+    if ":" in model_lower and not model_lower.startswith("http"):
+        return True
+    # Common local model families
+    return any(
+        pattern in model_lower
+        for pattern in (
+            "qwen", "hermes", "llama", "mistral", "phi", "tinyllama",
+            "neural-chat", "dolphin", "orca", "platypus", "openchat",
+            "vicuna", "alpaca", "falcon", "solar", "zephyr", "neural-chat",
+            "deepseek", "localai", "lm-studio"
+        )
+    )
 
 
 def _resolve_platform_hint(agent: Any, platform_key: str, default_hint: str) -> str:
@@ -334,7 +363,11 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
     # conversation.  Gated by config.yaml ``agent.parallel_tool_call_guidance``
     # (default True) and only injected when tools are actually loaded.
     if getattr(agent, "_parallel_tool_call_guidance", True) and agent.valid_tool_names:
-        stable_parts.append(PARALLEL_TOOL_CALL_GUIDANCE)
+        # Use compressed guidance for local models to reduce reasoning overhead
+        if _is_local_quantized_model(agent.model):
+            stable_parts.append(LOCAL_MODEL_PARALLEL_TOOL_GUIDANCE)
+        else:
+            stable_parts.append(PARALLEL_TOOL_CALL_GUIDANCE)
 
     # Tool-aware behavioral guidance: only inject when the tools are loaded
     tool_guidance = []
@@ -395,8 +428,14 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
             model_lower = (agent.model or "").lower()
             _inject = any(p in model_lower for p in TOOL_USE_ENFORCEMENT_MODELS)
         if _inject:
-            stable_parts.append(TOOL_USE_ENFORCEMENT_GUIDANCE)
             _model_lower = (agent.model or "").lower()
+            # Local/quantized models (Ollama, qwen, hermes, etc.): use compressed guidance
+            # to avoid long reasoning loops. They reason slower and get stuck; be direct.
+            if _is_local_quantized_model(agent.model):
+                stable_parts.append(LOCAL_MODEL_TOOL_USE_GUIDANCE)
+            else:
+                stable_parts.append(TOOL_USE_ENFORCEMENT_GUIDANCE)
+
             # Google model operational guidance (conciseness, absolute
             # paths, parallel tool calls, verify-before-edit, etc.)
             if "gemini" in _model_lower or "gemma" in _model_lower:
