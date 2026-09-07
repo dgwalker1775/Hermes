@@ -12,6 +12,7 @@ import {
   app,
   BrowserWindow,
   clipboard,
+  ClipboardItem,
   dialog,
   net as electronNet,
   globalShortcut,
@@ -4683,6 +4684,29 @@ async function resourceBufferFromUrl(rawUrl) {
   })
 }
 
+// Electron 44 replaced the old synchronous readImage/writeImage clipboard API
+// with an async, Blob-based ClipboardItem model (electronjs.org/docs/api/clipboard-item).
+async function readClipboardImage() {
+  const items = await clipboard.read()
+
+  for (const item of items) {
+    const type = item.types.find((t) => t.startsWith('image/'))
+
+    if (!type) {
+      continue
+    }
+
+    const blob = (await item.getType(type)) as Blob
+    const image = nativeImage.createFromBuffer(Buffer.from(await blob.arrayBuffer()))
+
+    if (!image.isEmpty()) {
+      return image
+    }
+  }
+
+  return null
+}
+
 async function copyImageFromUrl(rawUrl) {
   const { buffer } = (await resourceBufferFromUrl(rawUrl)) as any
   const image = nativeImage.createFromBuffer(buffer)
@@ -4691,7 +4715,7 @@ async function copyImageFromUrl(rawUrl) {
     throw new Error('Could not read image')
   }
 
-  clipboard.writeImage(image)
+  await clipboard.write([new ClipboardItem({ 'image/png': new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }) })])
 }
 
 async function saveImageFromUrl(rawUrl) {
@@ -11067,7 +11091,7 @@ ipcMain.handle('hermes:saveImageBuffer', async (_event, payload) => {
 })
 
 ipcMain.handle('hermes:saveClipboardImage', async () => {
-  const image = clipboard.readImage()
+  const image = await readClipboardImage()
 
   if (image && !image.isEmpty()) {
     return writeComposerImage(image.toPNG(), '.png')
