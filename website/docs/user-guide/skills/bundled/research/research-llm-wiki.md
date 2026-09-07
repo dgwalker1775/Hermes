@@ -21,7 +21,6 @@ Karpathy's LLM Wiki: build/query interlinked markdown KB.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `wiki`, `knowledge-base`, `research`, `notes`, `markdown`, `rag-alternative` |
-| Related skills | [`obsidian`](/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian), [`arxiv`](/docs/user-guide/skills/bundled/research/research-arxiv) |
 
 ## Reference: full SKILL.md
 
@@ -439,14 +438,12 @@ same directory as the wiki path.
 
 ### Obsidian Headless (servers and headless machines)
 
-On machines without a display, use `obsidian-headless` instead of the desktop app.
 It syncs vaults via Obsidian Sync without a GUI — perfect for agents running on
 servers that write to the wiki while Obsidian desktop reads it on another device.
 
 **Setup:**
 ```bash
 # Requires Node.js 22+
-npm install -g obsidian-headless
 
 # Login (requires Obsidian account with Sync subscription)
 ob login --email <email> --password '<password>'
@@ -467,7 +464,6 @@ ob sync --continuous
 
 **Continuous background sync via systemd:**
 ```ini
-# ~/.config/systemd/user/obsidian-wiki-sync.service
 [Unit]
 Description=Obsidian LLM Wiki Sync
 After=network-online.target
@@ -485,7 +481,6 @@ WantedBy=default.target
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user enable --now obsidian-wiki-sync
 # Enable linger so sync survives logout:
 sudo loginctl enable-linger $USER
 ```

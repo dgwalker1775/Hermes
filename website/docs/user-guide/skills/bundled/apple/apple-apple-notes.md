@@ -21,7 +21,6 @@ Manage Apple Notes via memo CLI: create, search, edit.
 | License | MIT |
 | Platforms | macos |
 | Tags | `Notes`, `Apple`, `macOS`, `note-taking` |
-| Related skills | [`obsidian`](/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian) |
 
 ## Reference: full SKILL.md
 
@@ -48,7 +47,6 @@ Use `memo` to manage Apple Notes directly from the terminal. Notes sync across a
 
 ## When NOT to Use
 
-- Obsidian vault management → use the `obsidian` skill
 - Bear Notes → separate app (not supported here)
 - Quick agent-only notes → use the `memory` tool instead
 
@@ -107,4 +105,3 @@ memo notes -ex                    # Export to HTML/Markdown
 
 1. Prefer Apple Notes when user wants cross-device sync (iPhone/iPad/Mac)
 2. Use the `memory` tool for agent-internal notes that don't need to sync
-3. Use the `obsidian` skill for Markdown-native knowledge management

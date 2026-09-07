@@ -667,18 +667,18 @@ class TestCompactionDiscoveryBothLayers:
         db.create_session("s_both", source="cli")
         # Long normal opening — exercises the 1200-char bookend cap.
         db.append_message("s_both", role="user",
-                          content="Kick off the obsidian gateway migration. " + "o" * 5000)
+                          content="Kick off the holographic gateway migration. " + "o" * 5000)
         db.append_message("s_both", role="assistant",
-                          content="Starting the obsidian gateway migration plan.")
+                          content="Starting the holographic gateway migration plan.")
         # Padding so the anchored window doesn't swallow the bookends.
         for i in range(10):
             db.append_message("s_both", role="user", content=f"migration step {i}")
             db.append_message("s_both", role="assistant", content=f"migration step {i} done")
         # The FTS match target — will be archived by compaction below.
         db.append_message("s_both", role="user",
-                          content="the obsidian gateway needs a quartz keystone to activate")
+                          content="the holographic gateway needs a quartz keystone to activate")
         db.append_message("s_both", role="assistant",
-                          content="Noted: quartz keystone required for the obsidian gateway.")
+                          content="Noted: quartz keystone required for the holographic gateway.")
         for i in range(5):
             db.append_message("s_both", role="user", content=f"wrap-up {i}")
             db.append_message("s_both", role="assistant", content=f"wrapped {i}")
@@ -720,7 +720,7 @@ class TestCompactionDiscoveryBothLayers:
 
         # The long-but-legitimate opening survives (capped, not dropped).
         bookend_contents = [m.get("content") or "" for m in entry.get("bookend_start", [])]
-        assert any("obsidian gateway migration" in c for c in bookend_contents)
+        assert any("holographic gateway migration" in c for c in bookend_contents)
 
 
 # =========================================================================

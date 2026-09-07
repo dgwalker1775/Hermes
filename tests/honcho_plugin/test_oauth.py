@@ -142,7 +142,7 @@ class TestInstallGrant:
         _write(path, {
             "apiKey": "hch-v3-root",  # root static key preserved
             "hosts": {
-                "obsidian": {"workspace": "obsidian"},
+                "discord": {"workspace": "discord"},
                 "hermes": {"workspace": "hermes", "saveMessages": False},
             },
         })
@@ -166,7 +166,7 @@ class TestInstallGrant:
 
         saved = json.loads(path.read_text())
         assert saved["apiKey"] == "hch-v3-root"  # untouched
-        assert saved["hosts"]["obsidian"] == {"workspace": "obsidian"}  # untouched
+        assert saved["hosts"]["discord"] == {"workspace": "discord"}  # untouched
         h = saved["hosts"]["hermes"]
         assert h["apiKey"] == "hch-at-fresh"
         assert h["oauth"]["refreshToken"] == "hch-rt-fresh"

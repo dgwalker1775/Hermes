@@ -21,7 +21,6 @@ description: "通过 memo CLI 管理 Apple Notes：创建、搜索、编辑"
 | 许可证 | MIT |
 | 平台 | macos |
 | 标签 | `Notes`, `Apple`, `macOS`, `note-taking` |
-| 相关 skill | [`obsidian`](/user-guide/skills/bundled/note-taking/note-taking-obsidian) |
 
 ## 参考：完整 SKILL.md
 
@@ -48,7 +47,6 @@ description: "通过 memo CLI 管理 Apple Notes：创建、搜索、编辑"
 
 ## 不适用时机
 
-- Obsidian vault 管理 → 使用 `obsidian` skill
 - Bear Notes → 独立应用（此处不支持）
 - 仅供 agent 内部使用的快速笔记 → 改用 `memory` 工具
 
@@ -103,4 +101,3 @@ memo notes -ex                    # 导出为 HTML/Markdown
 
 1. 当用户需要跨设备同步（iPhone/iPad/Mac）时，优先使用 Apple Notes
 2. 对不需要同步的 agent 内部笔记，使用 `memory` 工具
-3. 对以 Markdown 为核心的知识管理，使用 `obsidian` skill

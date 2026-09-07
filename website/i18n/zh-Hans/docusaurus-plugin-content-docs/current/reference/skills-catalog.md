@@ -103,12 +103,6 @@ Hermes 在执行 `hermes update` 时也会同步内置技能，但同步清单�
 | [`serving-llms-vllm`](/user-guide/skills/bundled/mlops/mlops-inference-serving-llms-vllm) | vLLM：高吞吐量 LLM 服务、OpenAI API 兼容、量化支持。 | `mlops/inference/serving-llms-vllm` |
 | [`weights-and-biases`](/user-guide/skills/bundled/mlops/mlops-evaluation-weights-and-biases) | W&B：记录 ML 实验、超参数搜索、模型注册表、仪表盘。 | `mlops/evaluation/weights-and-biases` |
 
-## note-taking
-
-| 技能 | 描述 | 路径 |
-|-------|-------------|------|
-| [`obsidian`](/user-guide/skills/bundled/note-taking/note-taking-obsidian) | 在 Obsidian 知识库中读取、搜索、创建和编辑笔记。 | `note-taking/obsidian` |
-
 ## productivity
 
 | 技能 | 描述 | 路径 |

@@ -385,17 +385,6 @@
     "size": "sm"
   },
   {
-    "id": "discord-kouff-obsidian-calendar-signal",
-    "source": "discord",
-    "author": "@kouff",
-    "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
-    "date": "2026-04-11",
-    "category": "personal-assistant",
-    "headline": "Hermes manages my tasks across Obsidian, Apple Calendar and Signal",
-    "quote": "I speak Turkish with it... initially said him to 'now i want you to use obsidian to manage my tasks and other stuff. and cross-check with my apple calendar'. later while working on another task today i said 'okay looks good. you know how you will manage tasks and events apple calendars + obsidian + cron/signal' and it confirmed the workflow.",
-    "size": "md"
-  },
-  {
     "id": "gh-prasad-vertex",
     "source": "github",
     "author": "@prasadus92",
@@ -1155,17 +1144,6 @@
     "size": "md"
   },
   {
-    "source": "reddit",
-    "author": "u/Jonathan_Rivera",
-    "url": "https://www.reddit.com/r/hermesagent/comments/1stz6gd/how_i_use_obsidian_as_the_longterm_memory/",
-    "date": "2026-04-23",
-    "category": "personal-assistant",
-    "headline": "Obsidian as the long-term memory backbone for Hermes (794 upvotes)",
-    "quote": "How I use Obsidian as the long-term memory backbone for my AI assistant. (794-upvote diagram showing Hermes Agent writing structured markdown notes back into a synced Obsidian vault, treating the vault as the durable memory layer that survives context resets and cross-machine moves.)",
-    "size": "md",
-    "id": "reddit-jonathan-rivera-obsidian-as-the"
-  },
-  {
     "id": "nazt-mcp-hybrid",
     "source": "gist",
     "author": "nazt (GitHub Gist)",
@@ -1912,17 +1890,6 @@
     "headline": "Got Hermes running on AWS VPS with Google Workspace automation",
     "quote": "Although Hermes installation was significantly easier than OpenClaw, it wasn't straight forward by any means. Things kept failing and it took many days-nights to figure it out because there was no documentation about this specific setup.",
     "size": "sm"
-  },
-  {
-    "id": "hn-rnxrx-obsidian",
-    "source": "hn",
-    "author": "rnxrx (Hacker News)",
-    "url": "https://news.ycombinator.com/item?id=47786673",
-    "date": "2026-04",
-    "category": "personal-assistant",
-    "headline": "Obsidian, home automation, VPS server management — on a cheap VPS",
-    "quote": "Having a competent agent with constant state has been good for memorializing and organizing important info directly into Obsidian, planning, and working out bugs with my home automation setup. Also helpful dealing with several miscellaneous servers in the house. I have it running on a cheap VPS and it's fairly locked down.",
-    "size": "md"
   },
   {
     "id": "discord-anibal3608-ollama-multiagent",
