@@ -15,6 +15,7 @@ from typing import Any, Dict
 from agent.lmstudio_reasoning import resolve_lmstudio_effort
 from agent.moonshot_schema import is_moonshot_model, sanitize_moonshot_tools
 from agent.prompt_builder import DEVELOPER_ROLE_MODELS
+from agent.system_prompt import _is_local_quantized_model
 from agent.transports.base import ProviderTransport
 from agent.transports.types import NormalizedResponse, ToolCall, Usage
 
@@ -39,6 +40,74 @@ def _static_prompt_instructions(messages: list[dict[str, Any]]) -> str:
         return json.dumps(content, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     except (TypeError, ValueError):
         return str(content or "")
+
+
+def _compress_tools_for_local_model(tools: list[dict[str, Any]] | None) -> list[dict[str, Any]] | None:
+    """Compress tool schemas for local models to reduce reasoning overhead.
+
+    Local models (qwen, hermes, etc.) spend excessive time reasoning about
+    detailed tool descriptions. This function strips verbose fields:
+    - Strips description longer than 100 chars (keep 1-liner)
+    - Strips parameter descriptions entirely
+    - Keeps only: name, type, required fields of parameters
+
+    Local models need to make a decision fast; verbosity causes long reasoning
+    loops with 0 tool calls.
+    """
+    if not tools:
+        return tools
+
+    compressed = []
+    for tool in tools:
+        if not isinstance(tool, dict):
+            compressed.append(tool)
+            continue
+
+        compressed_tool = {"type": tool.get("type", "function")}
+
+        # Compress function definition
+        if "function" in tool:
+            func = tool["function"]
+            if isinstance(func, dict):
+                compressed_func = {
+                    "name": func.get("name", ""),
+                }
+                # Keep description only if it's short (<100 chars); otherwise drop it
+                orig_desc = (func.get("description") or "").strip()
+                if orig_desc and len(orig_desc) <= 100:
+                    compressed_func["description"] = orig_desc
+
+                # Compress parameters: keep only name, type, required
+                orig_params = func.get("parameters", {})
+                if isinstance(orig_params, dict):
+                    props = orig_params.get("properties", {})
+                    required = orig_params.get("required", [])
+                    compressed_props = {}
+
+                    for prop_name, prop_spec in props.items():
+                        if isinstance(prop_spec, dict):
+                            # Keep only type and required flag (no description)
+                            compressed_props[prop_name] = {
+                                "type": prop_spec.get("type"),
+                            }
+                        else:
+                            compressed_props[prop_name] = prop_spec
+
+                    compressed_func["parameters"] = {
+                        "type": "object",
+                        "properties": compressed_props,
+                    }
+                    if required:
+                        compressed_func["parameters"]["required"] = required
+
+                compressed_tool["function"] = compressed_func
+        else:
+            # Non-function tools: pass through
+            compressed_tool = tool
+
+        compressed.append(compressed_tool)
+
+    return compressed
 
 
 def _add_prompt_cache_key(
@@ -449,6 +518,12 @@ class ChatCompletionsTransport(ProviderTransport):
             # etc.) compatible, in addition to direct moonshot.ai endpoints.
             if is_moonshot_model(model):
                 tools = sanitize_moonshot_tools(tools)
+
+            # Local/quantized models: compress tool schemas to reduce reasoning overhead
+            # and prevent long loops with 0 tool calls.
+            if _is_local_quantized_model(model):
+                tools = _compress_tools_for_local_model(tools)
+
             api_kwargs["tools"] = tools
 
         # max_tokens resolution — priority: ephemeral > user > provider default
