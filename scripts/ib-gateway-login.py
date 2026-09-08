@@ -227,8 +227,13 @@ def main():
     print("\n🔍 Checking for existing session...")
     existing_token = auth_manager.load_session_token()
     if existing_token:
-        print(f"✅ Valid session already exists (expires in {
-            (existing_token.expires_at - time.time()) / 3600:.1f} hours)")
+        hours_remaining = (
+            existing_token.expires_at - time.time()
+        ) / 3600
+        print(
+            f"✅ Valid session already exists "
+            f"(expires in {hours_remaining:.1f} hours)"
+        )
         return 0
 
     # Launch IB Gateway
