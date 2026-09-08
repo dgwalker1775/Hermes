@@ -5,7 +5,6 @@ Stores IB credentials securely using cryptography.
 Never hardcodes credentials in plaintext.
 """
 
-import os
 import json
 import getpass
 from pathlib import Path
