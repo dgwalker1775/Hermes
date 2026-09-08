@@ -104,7 +104,7 @@ ibgateway.username={account}
 ibgateway.password={password}
 ibgateway.account={account_type}
 """
-        creds_file.write_text(creds_content)
+        creds_file.write_text(creds_content, encoding="utf-8")
         creds_file.chmod(0o600)
 
         subprocess.Popen([str(gateway_exe)])
