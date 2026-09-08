@@ -304,8 +304,8 @@ class AEGISTrader:
             print("❌ IB Gateway not accessible on localhost:4001")
             return False
 
-        print(f"✅ IB Gateway connected (session expires in {
-            (token.expires_at - time.time()) / 3600:.1f}h)")
+        hours_remaining = (token.expires_at - time.time()) / 3600
+        print(f"✅ IB Gateway connected (session expires in {hours_remaining:.1f}h)")
         return True
 
     def daily_summary(self) -> str:
