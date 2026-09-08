@@ -6,17 +6,16 @@ for the AEGIS trading agent's IB Gateway connection.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
-import re
 import socket
 import subprocess
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
-import hashlib
-import hmac
 
 
 @dataclass
