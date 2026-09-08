@@ -86,7 +86,7 @@ def launch_ib_gateway():
         gateway_paths = [
             Path.home() / "Jts" / "ibgateway" / "ibgateway",
             Path("/opt/IBJts/ibgateway/ibgateway"),
-            Path("C:") / "Jts" / "ibgateway" / "ibgateway.exe",
+            Path("C:/Jts/ibgateway/ibgateway.exe"),
         ]
 
         gateway_exe = next((p for p in gateway_paths if p.exists()), None)
