@@ -104,12 +104,14 @@ class IBGatewayAuthManager:
             "sha256", key.encode(), salt, 100000
         )
 
-        # Encrypt using XOR with derived key (simple but sufficient for this use)
-        plaintext = json.dumps({
-            "username": creds.username,
-            "password": creds.password,
-            "account": creds.account,
-        }).encode()
+        # Encrypt using XOR with derived key
+        plaintext = json.dumps(
+            {
+                "username": creds.username,
+                "password": creds.password,
+                "account": creds.account,
+            }
+        ).encode()
 
         # Expand key to match plaintext length
         key_stream = b""
@@ -118,7 +120,9 @@ class IBGatewayAuthManager:
                 derived_key + len(key_stream).to_bytes(8, "big")
             ).digest()
 
-        ciphertext = bytes(a ^ b for a, b in zip(plaintext, key_stream[:len(plaintext)]))
+        ciphertext = bytes(
+            a ^ b for a, b in zip(plaintext, key_stream[: len(plaintext)])
+        )
 
         # Store with salt and HMAC for verification
         hmac_tag = hmac.new(derived_key, ciphertext, hashlib.sha256).digest()
@@ -177,7 +181,7 @@ class IBGatewayAuthManager:
             ).digest()
 
         plaintext = bytes(
-            a ^ b for a, b in zip(ciphertext, key_stream[:len(ciphertext)])
+            a ^ b for a, b in zip(ciphertext, key_stream[: len(ciphertext)])
         )
 
         data = json.loads(plaintext.decode())
