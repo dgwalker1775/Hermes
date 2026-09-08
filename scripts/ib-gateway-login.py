@@ -133,7 +133,7 @@ def save_session_token(credentials: dict):
         "status": "active"
     }
 
-    with open(token_file, 'w') as f:
+    with open(token_file, 'w', encoding='utf-8') as f:
         json.dump(session_data, f, indent=2)
 
     token_file.chmod(0o600)

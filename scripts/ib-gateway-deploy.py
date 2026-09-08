@@ -244,7 +244,7 @@ def save_session_state(credentials: dict) -> bool:
         "login_complete": True
     }
 
-    with open(session_file, 'w') as f:
+    with open(session_file, 'w', encoding='utf-8') as f:
         json.dump(session_data, f, indent=2)
 
     session_file.chmod(0o600)
