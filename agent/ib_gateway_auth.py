@@ -121,7 +121,7 @@ class IBGatewayAuthManager:
             ).digest()
 
         ciphertext = bytes(
-            a ^ b for a, b in zip(plaintext, key_stream[: len(plaintext)])
+            [a ^ b for a, b in zip(plaintext, key_stream[: len(plaintext)])]
         )
 
         # Store with salt and HMAC for verification
@@ -181,7 +181,7 @@ class IBGatewayAuthManager:
             ).digest()
 
         plaintext = bytes(
-            a ^ b for a, b in zip(ciphertext, key_stream[: len(ciphertext)])
+            [a ^ b for a, b in zip(ciphertext, key_stream[: len(ciphertext)])]
         )
 
         data = json.loads(plaintext.decode())
